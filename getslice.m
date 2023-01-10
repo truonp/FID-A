@@ -46,7 +46,7 @@ while ~found_img
         figure;
         imshow(dicomread(dcm_info),[]);
         MRSIStruct.mrsi.dcm_overlay=dcm_info;
-        MRSIStruct.flag.dcmfound=1;
+        MRSIStruct.flags.dcmfound=1;
 %         dcm_file=dcm_info.Filename;
 %         save_dir = uigetdir('/ResearchData4/ptruong/CAMH-DATA/Phosphorus','Select the save directory');
 %         unix(['cp ' dcm_info.Filename ' ' save_dir filesep]);
