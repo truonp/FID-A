@@ -41,7 +41,8 @@ function overlay_conc(in, met, x_range, y_range)
     end
 
     %center in the dimensions (l-r,a-p,s-i)
-    center = st.centre;
+%     center = st.centre;
+    center = voxels.voxelCenterCoordiante;
     %dimension size of the MRI
     dims = st.vols{1}.dim;
     %resolution of MRI (in mm)(not used, might be useful)
@@ -85,13 +86,14 @@ function overlay_conc(in, met, x_range, y_range)
     trans_plot = findobj(st.vols{1}.ax{4}.ax,'Tag','trans_plot');
     delete(trans_plot);
     %(needs to be modified if 3D MRSI is to be done)
-    coordinates = zeros(2, 5, numel(transverse_voxels));
+    coordinates = zeros(2, 5, numel(METABOLITE));
     counter = 1;
-    mets_to_plot = zeros(1,numel(transverse_voxels));
+    mets_to_plot = zeros(1,numel(METABOLITE));
     for i = 1:numel(transverse_voxels)
         if(transverse_voxels(i).index(1) <= X(2) && transverse_voxels(i).index(1)  >= X(1))
             if(transverse_voxels(i).index(2) <= Y(2) && transverse_voxels(i).index(2) >= Y(1))
-                coordinates(:,:,counter) = transverse_voxels(i).find_intersection('axial', center(3)) - bb(1,1:2)';
+                tvox_inter=transverse_voxels(i).find_intersection('axial', center(3));
+                coordinates(:,:,counter) = tvox_inter(1:2,:) - repmat(bb(1,1:2)',[1,5]);
                 x_index = transverse_voxels(i).index(1) - X(1) + 1;
                 y_index = transverse_voxels(i).index(2) - Y(1) + 1;
                 mets_to_plot(counter) = METABOLITE(x_index, y_index);
