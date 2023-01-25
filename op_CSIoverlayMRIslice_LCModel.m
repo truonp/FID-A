@@ -112,18 +112,18 @@ while ~r_valid
 end
     
 for i = 1:length(metab_arr)
-    x = x_range(2)-metab_data.Row(i)+1;
-    y = metab_data.Col(i);
+    x = metab_data.Col(i);
+    y = metab_data.Row(i);
     metab_mat(x,y) = metab_arr(i);
 end
 
 met_img = imresize(metab_mat,size(new_img),'nearest');
 
 %snippet of this code taken from: https://www.mathworks.com/matlabcentral/answers/635094-overlay-the-image-with-transparency
-cmap = jet(256);
+cmap = turbo(256);
 rgbImage = ind2rgb(uint8(255 * mat2gray(met_img)), cmap);
 ha = imshow(new_img, []);
 hold on;
-hb = imshow(rgbImage);hb.AlphaData = 0.5;
+hb = imshow(rgbImage);hb.AlphaData = 0.3;
 end
 
