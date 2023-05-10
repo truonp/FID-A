@@ -32,13 +32,13 @@ if nargin<6
         if nargin<4
             xlab='Frequency (ppm)';
             if nargin<3
-                if strcmp(in.nucleus,'31P')
+                if strcmp(in{1}.nucleus,'31P')
                     ppmmax=25;
                 else
                     ppmmax=5.2;
                 end
                 if nargin<2
-                    if strcmp(in.nucleus,'31P')
+                    if strcmp(in{1}.nucleus,'31P')
                         ppmmin=-25;
                     else
                         ppmmin=0.2;
