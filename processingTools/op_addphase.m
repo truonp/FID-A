@@ -23,7 +23,11 @@ function out=op_addphase(in,ph0,ph1,ppm0,suppressPlot);
 if nargin<5
     suppressPlot=0;
     if nargin<4
-        ppm0=4.65;
+        if strcmp(in.nucleus,'31P')
+            ppm0=0;
+        else
+            ppm0=4.65;
+        end
         if nargin<3
             ph1=0;
         end
