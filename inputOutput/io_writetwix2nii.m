@@ -1,4 +1,4 @@
-function mrs_struct=op_twix2nii(mrs_struct)
+function out=io_writetwix2nii(in)
 %Parsing FID-A format to NIfTI-MRS format as described in:
 %`Clarke WT, Bell TK, Emir UE, Mikkelsen M, Oeltzschner G, Shamaei A, Soher
 %BJ, Wilson M. NIfTI-MRS: A standard data format for magnetic resonance
@@ -107,54 +107,58 @@ header.magic=sprintf('n+%g%s', 2, char([0 13 10 26 10]));
 header.datatype=32;
 header.bitpix=64;
 tmp_dim=4; %Starting tmp_dim(1), minimum dimension is 4 [kx ky kz t] - **PT**2023
-if isfield(mrs_struct.dims,'kx') %MRSI
-    if ~mrs_struct.dims.kx
+if isfield(in.dims,'kx') %MRSI
+    if ~in.dims.kx
         kx=1;
     else
-        kx=mrs_struct.sz(mrs_struct.dims.kx);
+        kx=in.sz(in.dims.kx);
     end
-    if ~mrs_struct.dims.ky
+    if ~in.dims.ky
         ky=1;
     else
-        ky=mrs_struct.sz(mrs_struct.dims.ky);
+        ky=in.sz(in.dims.ky);
     end
-    if ~mrs_struct.dims.kz
+    if ~in.dims.kz
         kz=1;
     else
-        kz=mrs_struct.sz(mrs_struct.dims.kz);
+        kz=in.sz(in.dims.kz);
     end
-    dwelltime=mrs_struct.spectralDwellTime;
+    dwelltime=in.spectralDwellTime;
 else %SVS/FID
     kx=1;
     ky=1;
     kz=1;
-    dwelltime=mrs_struct.dwelltime;
+    dwelltime=in.dwelltime;
 end
 tmp_dim(2:4)=[kx,ky,kz];
-t=mrs_struct.sz(mrs_struct.dims.t);
+t=in.sz(in.dims.t);
 tmp_dim(5)=t;
 dim_cnt=5;
 
-if mrs_struct.dims.coils
-    coils=mrs_struct.sz(mrs_struct.dims.coils);
+if in.dims.coils
+    coils=in.sz(in.dims.coils);
     dim_cnt=dim_cnt+1;
     tmp_dim(dim_cnt)=coils;
     tmp_dim(1)=tmp_dim(1)+1;
 end
 
-if mrs_struct.dims.averages
-    averages=mrs_struct.sz(mrs_struct.dims.averages);
+if in.dims.averages
+    averages=in.sz(in.dims.averages);
     dim_cnt=dim_cnt+1;
     tmp_dim(dim_cnt)=averages;
     tmp_dim(1)=tmp_dim(1)+1;
 end
 
-if mrs_struct.dims.subSpecs
-    subSpecs=mrs_struct.sz(mrs_struct.dims.subSpecs);
+if in.dims.subSpecs
+    subSpecs=in.sz(in.dims.subSpecs);
     dim_cnt=dim_cnt+1;
     tmp_dim(dim_cnt)=subSpecs;
     tmp_dim(1)=tmp_dim(1)+1;
 end
+
+fids=zeros(kx,ky,kz,size(in.fids,in.dims.t));
+fids(1,1,1,:)=in.fids;
+nii=nii_tool('init',fids);
 
 %dim(1) needs to be +1 from the actual number of dims. Order is: 
 %[dim1 kx ky kz t coils averages subspecs extras] - will need to
@@ -163,9 +167,9 @@ header.dim=tmp_dim;
 header.intent_p1=0;
 header.intent_p2=0;
 header.intent_p3=0;
-header.pixdim=[1 mrs_struct.hdr.MeasYaps.sSpecPara.sVoI.dReadoutFOV ...
-    mrs_struct.hdr.MeasYaps.sSpecPara.sVoI.dPhaseFOV ...
-    mrs_struct.hdr.MeasYaps.sSpecPara.sVoI.dThickness ...
+header.pixdim=[1 in.hdr.MeasYaps.sSpecPara.sVoI.dReadoutFOV ...
+    in.hdr.MeasYaps.sSpecPara.sVoI.dPhaseFOV ...
+    in.hdr.MeasYaps.sSpecPara.sVoI.dThickness ...
     dwelltime 1 1 1];
 header.vox_offset=1680;
 header.scl_slope=1; 
@@ -183,12 +187,12 @@ header.sform_code=2;
 header.quatern_b=1;
 header.quatern_c=0;
 header.quatern_d=0;
-header.qoffset_x=-mrs_struct.hdr.MeasYaps.sSpecPara.sVoI.sPosition.dSag;
-header.qoffset_y=-mrs_struct.hdr.MeasYaps.sSpecPara.sVoI.sPosition.dCor;
-header.qoffset_z=mrs_struct.hdr.MeasYaps.sSpecPara.sVoI.sPosition.dTra;
-header.srow_x=[mrs_struct.hdr.MeasYaps.sSpecPara.sVoI.dReadoutFOV 0 0 header.qoffset_x];
-header.srow_y=[0 -mrs_struct.hdr.MeasYaps.sSpecPara.sVoI.dPhaseFOV 0 header.qoffset_y];
-header.srow_z=[0 0 -mrs_struct.hdr.MeasYaps.sSpecPara.sVoI.dThickness header.qoffset_z];
+header.qoffset_x=-in.hdr.MeasYaps.sSpecPara.sVoI.sPosition.dSag;
+header.qoffset_y=-in.hdr.MeasYaps.sSpecPara.sVoI.sPosition.dCor;
+header.qoffset_z=in.hdr.MeasYaps.sSpecPara.sVoI.sPosition.dTra;
+header.srow_x=[in.hdr.MeasYaps.sSpecPara.sVoI.dReadoutFOV 0 0 header.qoffset_x];
+header.srow_y=[0 -in.hdr.MeasYaps.sSpecPara.sVoI.dPhaseFOV 0 header.qoffset_y];
+header.srow_z=[0 0 -in.hdr.MeasYaps.sSpecPara.sVoI.dThickness header.qoffset_z];
 header.slice_code=0;
 header.xyzt_units=0;
 header.intent_code=0;
@@ -200,52 +204,52 @@ header.extension=[1 0 0 0];
 % header.swap_endian=0;
 % header.filename=[mrs_struct.filename(1:end-2) 'nii.gz'];
 
-header_ext.SpectrometerFrequency=mrs_struct.txfrq/1e6;
-header_ext.ResonantNucleus={mrs_struct.nucleus};
-if mrs_struct.dims.coils
+header_ext.SpectrometerFrequency=in.txfrq/1e6;
+header_ext.ResonantNucleus={in.nucleus};
+if in.dims.coils
     header_ext.dim_5='DIM_COIL';
 end
-if mrs_struct.dims.averages
+if in.dims.averages
     header_ext.dim_6='DIM_DYN';
 end
-if mrs_struct.dims.subSpecs
+if in.dims.subSpecs
     header_ext.dim_7='DIM_EDIT';
 end
-header_ext.EchoTime=mrs_struct.te/1e6;
-header_ext.RepetitionTime=mrs_struct.tr/1e6;
-header_ext.ExcitationFlipAngle=mrs_struct.hdr.Meas.FlipAngle;
-header_ext.TxOffset=mrs_struct.hdr.Meas.dDeltaFrequency;
-header_ext.Manufacturer=mrs_struct.hdr.Meas.Manufacturer;
-header_ext.ManufacturersModelName=mrs_struct.hdr.Meas.ManufacturersModelName;
-header_ext.DeviceSerialNumber=mrs_struct.hdr.Meas.DeviceSerialNumber;
-header_ext.SoftwareVersions=mrs_struct.hdr.Meas.SoftwareVersions;
-header_ext.InstitutionName=mrs_struct.hdr.Meas.InstitutionName;
-header_ext.InstitutionAddress=mrs_struct.hdr.Meas.InstitutionAddress;
+header_ext.EchoTime=in.te/1e6;
+header_ext.RepetitionTime=in.tr/1e6;
+header_ext.ExcitationFlipAngle=in.hdr.Meas.FlipAngle;
+header_ext.TxOffset=in.hdr.Meas.dDeltaFrequency;
+header_ext.Manufacturer=in.hdr.Meas.Manufacturer;
+header_ext.ManufacturersModelName=in.hdr.Meas.ManufacturersModelName;
+header_ext.DeviceSerialNumber=in.hdr.Meas.DeviceSerialNumber;
+header_ext.SoftwareVersions=in.hdr.Meas.SoftwareVersions;
+header_ext.InstitutionName=in.hdr.Meas.InstitutionName;
+header_ext.InstitutionAddress=in.hdr.Meas.InstitutionAddress;
 
-if isfield(mrs_struct.hdr.MeasYaps,'sCoilSelectMeas')
-    header_ext.RxCoil=mrs_struct.hdr.MeasYaps.sCoilSelectMeas.aRxCoilSelectData{1}.asList{1}.sCoilElementID.tCoilID;
+if isfield(in.hdr.MeasYaps,'sCoilSelectMeas')
+    header_ext.RxCoil=in.hdr.MeasYaps.sCoilSelectMeas.aRxCoilSelectData{1}.asList{1}.sCoilElementID.tCoilID;
 else %different field for older data
-    header_ext.RxCoil=mrs_struct.hdr.MeasYaps.asCoilSelectMeas{1}.asList{1}.sCoilElementID.tCoilID;
+    header_ext.RxCoil=in.hdr.MeasYaps.asCoilSelectMeas{1}.asList{1}.sCoilElementID.tCoilID;
 end
-header_ext.SequenceName=mrs_struct.hdr.Meas.SequenceString;
-header_ext.ProtocolName=mrs_struct.hdr.Meas.ProtocolName;
-header_ext.PatientPosition=mrs_struct.hdr.Meas.PatientPosition;
+header_ext.SequenceName=in.hdr.Meas.SequenceString;
+header_ext.ProtocolName=in.hdr.Meas.ProtocolName;
+header_ext.PatientPosition=in.hdr.Meas.PatientPosition;
 header_ext.PatientName='';%mrs_struct.hdr.Meas.PatientName;
 header_ext.PatientWeight='';%mrs_struct.hdr.Meas.PatientWeight;
 header_ext.PatientDoB='';%mrs_struct.hdr.Meas.PatientBirthday;
 header_ext.PatientSex='';%mrs_struct.hdr.Meas.PatientSex;
 header_ext.ConversionMethod='FID-A twix2nii v0';
 header_ext.ConvertionTime=datetime(now,'ConvertFrom','datenum');
-[~,fname,fext]=fileparts(mrs_struct.filename);
+[~,fname,fext]=fileparts(in.filename);
 header_ext.OriginalFile=[fname fext];
 header_ext.kSpace=[0,0,0];
-header_ext.PulseSequenceFile.Value=mrs_struct.hdr.Meas.tSequenceFileName;
+header_ext.PulseSequenceFile.Value=in.hdr.Meas.tSequenceFileName;
 header_ext.PulseSequenceFile.Description='Sequence binary path.';
-header_ext.IceProgramFile.Value=mrs_struct.hdr.Meas.tICEProgramName;
+header_ext.IceProgramFile.Value=in.hdr.Meas.tICEProgramName;
 header_ext.IceProgramFile.Description='Reconstruction binary path.';
 
 nii_mrs.hdr=header;
 nii_mrs.hdr_ext=header_ext;
-mrs_struct.nii_mrs=nii_mrs;
+out.nii_mrs=nii_mrs;
 
 end
