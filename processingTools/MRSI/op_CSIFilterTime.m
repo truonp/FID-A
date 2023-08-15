@@ -28,7 +28,7 @@ function [MRSIStruct, lorenzianFilter] = op_CSIFilterTime(MRSIStruct, lineBroade
     t2 = 1 / (pi * lineBroadening);
 
     %Create an exponential decay (lorentzian filter):
-    time = getTime(MRSIStruct);
+    time = MRSIStruct.spectralTime;
     lorenzianFilter = exp(-time / t2);
 
     [MRSIStruct, prevPermute, prevSize] = reshapeDimensions(MRSIStruct, {'t'});
