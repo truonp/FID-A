@@ -45,7 +45,7 @@ end
 
 % specs = ifft(fftshift(getData(in), in.dims.t), [], in.dims.t);
 fids = FIDAfft(getData(in),in.dims.t,'f');
-vec_signal = conj(fids(:));
+% vec_signal = conj(fids(:));
 
 RF = [imag(vec_signal) real(vec_signal)];
 

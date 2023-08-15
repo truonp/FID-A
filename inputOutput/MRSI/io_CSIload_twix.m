@@ -30,7 +30,7 @@ function MRSIStruct = io_CSIload_twix(filename)
     %Squeeze the data to remove singleton dims
     data = squeeze(dOut.data);
     % reverse the direction of rotation
-    data = conj(data);
+%     data = conj(data);
 
     %get version number and dims
     %version = twix_obj.image.softwareVersion;
