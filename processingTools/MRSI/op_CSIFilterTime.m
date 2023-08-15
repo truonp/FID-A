@@ -41,7 +41,7 @@ function [MRSIStruct, lorenzianFilter] = op_CSIFilterTime(MRSIStruct, lineBroade
     data = data .* lorenzianFilterDataSize;
 
     MRSIStruct = setData(MRSIStruct, data);
-    MRSIStruct = reshapeDimensions(MRSIStruct, prevPermute, prevSize);
+    MRSIStruct = reshapeBack(MRSIStruct, prevPermute, prevSize);
 
     MRSIStruct = setFlags(MRSIStruct, 'writtentostruct', true);
     MRSIStruct = setFlags(MRSIStruct, 'filtered', true);
