@@ -33,7 +33,7 @@ function [MRSIStruct, lorenzianFilter] = op_CSIFilterTime(MRSIStruct, lineBroade
 
     [MRSIStruct, prevPermute, prevSize] = reshapeDimensions(MRSIStruct, {'t'});
     extraSize = getSizeFromDimensions(MRSIStruct, {'extras'});
-    lorenzianFilterDataSize = repmat(lorenzianFilter, [1, extraSize]);
+    lorenzianFilterDataSize = repmat(lorenzianFilter', [1, extraSize]);
 
     %get data
     data = getData(MRSIStruct);
