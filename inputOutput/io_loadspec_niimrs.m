@@ -304,18 +304,92 @@ if allDims(1)*allDims(2)*allDims(3) == 1 % x=y=z=1
     
     %Now take fft of time domain to get fid:
     specs=fftshift(ifft(fids,[],dims.t),dims.t);
+else
+    fids = squeeze(fids);
+    
+    %Now that we've indexed the dimensions of the data array, we now need to
+    %permute it so that the order of the dimensions is standardized:  we want
+    %the order to be as follows:
+    %   1) time domain data.
+    %   2) coils.
+    %   3) averages.
+    %   4) subSpecs.
+    %   5) extras.
 
+    % Adjust dimension indices for the fact that we have collapsed the
+    % three spatial dimensions (which we don't need for SVS data)
+    sqzDims = {};
+    dimsFieldNames = fieldnames(dims);
+    for rr = 1:length(dimsFieldNames)
+        if dims.(dimsFieldNames{rr}) ~= 0
+            % Subtract 3 (x, y, z) from the dimension indices
+            dims.(dimsFieldNames{rr}) = dims.(dimsFieldNames{rr});
+            sqzDims{end+1} = dimsFieldNames{rr};
+        end
+    end
+
+    if length(sqzDims)==8
+        fids=permute(fids,[dims.t dims.coils dims.averages dims.subSpecs dims.extras]);
+        dims.t=1;dims.coils=2;dims.averages=3;dims.subSpecs=4;dims.extras=5;
+    elseif length(sqzDims)==7
+        if dims.extras==0
+            fids=permute(fids,[dims.t dims.coils dims.averages dims.subSpecs]);
+            dims.t=1;dims.coils=2;dims.averages=3;dims.subSpecs=4;dims.extras=0;
+        elseif dims.subSpecs==0
+            fids=permute(fids,[dims.t dims.coils dims.averages dims.extras]);
+            dims.t=1;dims.coils=2;dims.averages=3;dims.subSpecs=0;dims.extras=4;
+        elseif dims.averages==0
+            fids=permute(fids,[dims.t dims.coils dims.subSpecs dims.extras]);
+            dims.t=1;dims.coils=2;dims;averages=0;dims.subSpecs=3;dims.extras=4;
+        elseif dims.coils==0
+            fids=permute(fids,[dims.t dims.averages dims.subSpecs dims.extras]);
+            dims.t=1;dims.coils=0;dims.averages=2;dims.subSpecs=3;dims.extras=4;
+        end
+    elseif length(sqzDims)==6
+        if dims.extras==0 && dims.subSpecs==0
+            fids=permute(fids,[dims.t dims.coils dims.averages]);
+            dims.t=1;dims.coils=2;dims.averages=3;dims.subSpecs=0;dims.extras=0;
+        elseif dims.extras==0 && dims.averages==0
+            fids=permute(fids,[dims.t dims.coils dims.subSpecs]);
+            dims.t=1;dims.coils=2;dims.averages=0;dims.subSpecs=3;dims.extras=0;
+        elseif dims.extras==0 && dims.coils==0
+            fids=permute(fids,[dims.t dims.averages dims.subSpecs]);
+            dims.t=1;dims.coils=0;dims.averages=2;dims.subSpecs=3;dims.extras=0;
+        end
+    elseif length(sqzDims)==5
+        if dims.extras==0 && dims.subSpecs==0 && dims.averages==0
+            fids=permute(fids,[dims.t dims.coils]);
+            dims.t=1;dims.coils=2;dims.averages=0;dims.subSpecs=0;dims.extras=0;
+        elseif dims.extras==0 && dims.subSpecs==0 && dims.coils==0
+            fids=permute(fids,[dims.t dims.averages]);
+            dims.t=1;dims.coils=0;dims.averages=2;dims.subSpecs=0;dims.extras=0;
+        elseif dims.extras==0 && dims.averages==0 && dims.coils==0
+            fids=permute(fids,[dims.t dims.subSpecs]);
+            dims.t=1;dims.coils=0;dims.averages=0;dims.subSpecs=2;dims.extras=0;
+        end
+    elseif length(sqzDims)==4
+        dims.t=1;dims.coils=0;dims.averages=0;dims.subSpecs=0;dims.extras=0;
+    end
+    
+    %Now get the size of the data array:
+    sz=size(fids);
+    
+    %Compared to NIfTI MRS, FID-A needs the conjugate
+    fids = conj(fids);
+    
+    %Now take fft of time domain to get fid:
+    specs=fftshift(ifft(fids,[],dims.t),dims.t);
 end
 
 
 
 % Fill in additional FID-A format variables
 % Nucleus (new field)
-out.nucleus = hdr_ext.ResonantNucleus;
+out.nucleus = hdr_ext.ResonantNucleus{:};
 % Calculate B0 from spectrometer frequency depending on nucleus
 % gamma from Wikipedia article "Gyromagnetic ratio" (3 signif. digits)
 gamma=getgamma(out.nucleus);
-
+Bo=f0/gamma;
 % Calculate t and ppm arrays using the calculated parameters:
 % f   =[(-sw/2) + (sw/(2*nPts)) : sw/(nPts) : (sw/2) - (sw/(2*nPts))];
 % ppm = -f / (Bo(1)*42.577);
