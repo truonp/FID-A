@@ -550,6 +550,57 @@ switch nucleus
 end
 t=[0:dwelltime:(sz(1)-1)*dwelltime];
 
+%Borrowed from Gannet's Twix read in for getting voxel info - **PT**2025
+% Extract voxel dimensions
+if (strcmp(version,'vd') || strcmp(version,'vb') || strcmp(version,'XA30'))
+    TwixHeader.VoI_RoFOV     = twix_obj.hdr.Config.VoI_RoFOV; % Voxel size in readout direction [mm]
+    TwixHeader.VoI_PeFOV     = twix_obj.hdr.Config.VoI_PeFOV; % Voxel size in phase encoding direction [mm]
+    TwixHeader.VoIThickness  = twix_obj.hdr.Config.VoI_SliceThickness; % Voxel size in slice selection direction [mm]
+    TwixHeader.PosCor         = twix_obj.hdr.Config.VoI_Position_Cor; % Coronal coordinate of voxel [mm]
+    TwixHeader.PosSag         = twix_obj.hdr.Config.VoI_Position_Sag; % Sagittal coordinate of voxel [mm]
+    TwixHeader.PosTra         = twix_obj.hdr.Config.VoI_Position_Tra; % Transversal coordinate of voxel [mm]
+    TwixHeader.VoI_InPlaneRot = twix_obj.hdr.Config.VoI_InPlaneRotAngle; % Voxel rotation in plane
+    TwixHeader.NormCor        = twix_obj.hdr.Config.VoI_Normal_Cor; % Coronal component of normal vector of voxel
+    TwixHeader.NormSag        = twix_obj.hdr.Config.VoI_Normal_Sag; % Sagittal component of normal vector of voxel
+    TwixHeader.NormTra        = twix_obj.hdr.Config.VoI_Normal_Tra; % Transversal component of normal vector of voxel
+else
+    TwixHeader.VoI_RoFOV     = twix_obj.hdr.Spice.VoiReadoutFOV; % Voxel size in readout direction [mm]
+    TwixHeader.VoI_PeFOV     = twix_obj.hdr.Spice.VoiPhaseFOV; % Voxel size in phase encoding direction [mm]
+    TwixHeader.VoIThickness  = twix_obj.hdr.Spice.VoiThickness; % Voxel size in slice selection direction [mm]
+    TwixHeader.PosCor         = twix_obj.hdr.Spice.VoiPositionCor; % Coronal coordinate of voxel [mm]
+    TwixHeader.PosSag         = twix_obj.hdr.Spice.VoiPositionSag; % Sagittal coordinate of voxel [mm]
+    TwixHeader.PosTra         = twix_obj.hdr.Spice.VoiPositionTra; % Transversal coordinate of voxel [mm]
+    TwixHeader.VoI_InPlaneRot = twix_obj.hdr.Spice.VoiInPlaneRot; % Voxel rotation in plane
+    TwixHeader.NormCor        = twix_obj.hdr.Spice.VoiNormalCor; % Coronal component of normal vector of voxel
+    TwixHeader.NormSag        = twix_obj.hdr.Spice.VoiNormalSag; % Sagittal component of normal vector of voxel
+    TwixHeader.NormTra        = twix_obj.hdr.Spice.VoiNormalTra; % Transversal component of normal vector of voxel
+end
+TwixHeader.TablePosSag    = twix_obj.hdr.Dicom.lGlobalTablePosSag; % Sagittal table position [mm]
+TwixHeader.TablePosCor    = twix_obj.hdr.Dicom.lGlobalTablePosCor; % Coronal table position [mm]
+TwixHeader.TablePosTra    = twix_obj.hdr.Dicom.lGlobalTablePosTra; % Transversal table position [mm]
+% If a parameter is set to zero (e.g. if no voxel rotation is
+% performed), the respective field is left empty in the TWIX file. This
+% case needs to be intercepted. Setting to the minimum possible value.
+VoI_Params = {'VoI_InPlaneRot','VoI_RoFOV','VoI_PeFOV','VoIThickness','NormCor','NormSag','NormTra', ...
+              'PosCor','PosSag','PosTra','TablePosSag','TablePosCor','TablePosTra'};
+for pp = 1:length(VoI_Params)
+    if isempty(TwixHeader.(VoI_Params{pp}))
+        TwixHeader.(VoI_Params{pp}) = realmin('double');
+    end
+end
+geometry.size.VoI_RoFOV     = TwixHeader.VoI_RoFOV; % Voxel size in readout direction [mm]
+geometry.size.VoI_PeFOV     = TwixHeader.VoI_PeFOV; % Voxel size in phase encoding direction [mm]
+geometry.size.VoIThickness  = TwixHeader.VoIThickness; % Voxel size in slice selection direction [mm]
+geometry.pos.PosCor         = TwixHeader.PosCor; % Coronal coordinate of voxel [mm]
+geometry.pos.PosSag         = TwixHeader.PosSag; % Sagittal coordinate of voxel [mm]
+geometry.pos.PosTra         = TwixHeader.PosTra; % Transversal coordinate of voxel [mm]
+geometry.pos.TablePosSag    = TwixHeader.TablePosSag; % Sagittal table position [mm]
+geometry.pos.TablePosCor    = TwixHeader.TablePosCor; % Coronal table position [mm]
+geometry.pos.TablePosTra    = TwixHeader.TablePosTra; % Transversal table position [mm]
+geometry.rot.VoI_InPlaneRot = TwixHeader.VoI_InPlaneRot; % Voxel rotation in plane
+geometry.rot.NormCor        = TwixHeader.NormCor; % Coronal component of normal vector of voxel
+geometry.rot.NormSag        = TwixHeader.NormSag; % Sagittal component of normal vector of voxel
+geometry.rot.NormTra        = TwixHeader.NormTra; % Transversal component of normal vector of voxel
 
 %FILLING IN DATA STRUCTURE
 out.fids=fids;
@@ -574,6 +625,16 @@ out.pointsToLeftshift=leftshift;
 out.nucleus=nucleus;
 out.gamma=gamma;
 
+out.geometry = geometry;
+if isfield(twix_obj.hdr.Dicom,'SoftwareVersions')
+    out.software = [version ' ' twix_obj.hdr.Dicom.SoftwareVersions];
+else
+    out.software = version;
+end
+out.PatientPosition = twix_obj.hdr.Config.PatientPosition;
+out.Manufacturer = 'Siemens';
+[~,filename,ext] = fileparts(twix_obj.image.filename);
+out.OriginalFile = [filename ext];
 
 %FILLING IN THE FLAGS
 out.flags.writtentostruct=1;
@@ -619,6 +680,14 @@ if wRefs
     out_w.nucleus=nucleus;
     out_w.gamma=gamma;
 
+    out.geometry = geometry;
+
+    out.software = version;
+
+    out.PatientPosition = twix_obj.hdr.Config.PatientPosition;
+    out.Manufacturer = 'Siemens';
+    [~,filename,ext] = fileparts(filename);
+    out.OriginalFile = [filename ext];
 
     %FILLING IN THE FLAGS
     out_w.flags.writtentostruct=1;
