@@ -636,6 +636,8 @@ out.Manufacturer = 'Siemens';
 [~,filename,ext] = fileparts(twix_obj.image.filename);
 out.OriginalFile = [filename ext];
 
+out.nii_orientation=svs_orientation(twix_obj.hdr);
+
 %FILLING IN THE FLAGS
 out.flags.writtentostruct=1;
 out.flags.gotparams=1;
