@@ -60,6 +60,9 @@ else
    parsGuess=initPars;
 end
 
+nlinopts=statset('nlinfit');
+nlinopts=statset(nlinopts,'MaxIter',400,'TolX',1e-8,'TolFun',1e-8);
+
 % Normalize weights 
 ppmWeights = ppmWeights / sum(ppmWeights);
 
@@ -108,15 +111,15 @@ if exist('OCTAVE_VERSION', 'builtin') ~= 0 %If using Octave, nlinfit doesn't hav
     fs = parsFit(1);
     phs = parsFit(2) + phShift;
 else
-    parsFit=nlinfit(in.fids(:,2),base,@op_freqPhaseShiftComplexNest,parsGuess,...
-        'weights', [ppmWeights ppmWeights]');
-    A=op_freqPhaseShiftNest(parsFit,in.fids(:,2),phShift);
-    size(A);
-    size(fids);
-    fids(:,1)=in.fids(:,1);
-    fids(:,2)=A;
-    fs=parsFit(1);
-    phs=parsFit(2)+phShift;
+	parsFit=nlinfit(in.fids(:,2),base,@op_freqPhaseShiftComplexNest,parsGuess,...
+                nlinopts, 'weights', [ppmWeights ppmWeights]');
+	A=op_freqPhaseShiftNest(parsFit,in.fids(:,2),phShift);
+	size(A);
+	size(fids);
+	fids(:,1)=in.fids(:,1);
+	fids(:,2)=A;
+	fs=parsFit(1);
+	phs=parsFit(2)+phShift;
 end
 %plot(in.ppm,fftshift(ifft(fids(:,1,m))),in.ppm,fftshift(ifft(fids(:,n,m))));
 
