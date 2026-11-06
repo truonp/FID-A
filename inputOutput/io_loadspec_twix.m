@@ -64,11 +64,13 @@ isjnSpecial=~isempty(strfind(sequence,'jn_svs_special')) ||...  %or Jamie Near's
             ~isempty(strfind(sequence,'md_Special')) ||... %or another version of Masoumeh Dehghani's SPECIAL sequence?
             ~isempty(strfind(sequence,'md_Inv_special')) ||... %or Masoumeh Dehghani's Inversion Recovery SPECIAL sequence?
             ~isempty(strfind(sequence,'pt_svs_special_31p')) ||...; %or Peter Trong's 31P SPECIAL seqeunce?
-            ~isempty(strfind(sequence,'md_svox_special')); %or another one of Masoumeh Deghani's SPECIAL sequence versions?
+            ~isempty(strfind(sequence,'md_svox_special')) || ...; %or another one of Masoumeh Deghani's SPECIAL sequence versions?
+            ~isempty(strfind(sequence,'eo_svs_sspecial')); %or Elena Osipyan's sSPECIAL (GOIA) sequence versions?
 ishdSPECIAL=~isempty(strfind(sequence,'md_dvox_special')); %Is this Masoumeh Dehghani's hadamard-encoded dual-SPECIAL sequence?
 isjnMP=~isempty(strfind(sequence,'jn_MEGA_GABA')); %Is this Jamie Near's MEGA-PRESS sequence?
 isjnseq=~isempty(strfind(sequence,'jn_')) ||... %Is this another one of Jamie Near's sequences 
-        ~isempty(strfind(sequence,'md_'));      %or a sequence derived from Jamie Near's sequences (by Masoumeh Dehghani)?
+        ~isempty(strfind(sequence,'md_')) ||...;      %or a sequence derived from Jamie Near's sequences (by Masoumeh Dehghani)?
+        ~isempty(strfind(sequence,'eo_'));      %or a sequence derived from Jamie Near's sequences (by Elena Osipyan)?
 isWIP529=~isempty(strfind(sequence,'edit_529')); %Is this WIP 529 (MEGA-PRESS)?
 isWIP859=~isempty(strfind(sequence,'edit_859')); %Is this WIP 859 (MEGA-PRESS)?
 isMinn_eja=~isempty(strfind(sequence,'eja_svs_')); %Is this one of Eddie Auerbach's (CMRR, U Minnesota) sequences?
@@ -551,7 +553,7 @@ elseif isMinn_eja || isMinn_dkd
 else
     leftshift = twix_obj.image.freeParam(1);
 end
-
+leftshift=0;
 %****************************************************************
 
 
@@ -596,6 +598,8 @@ out.tr=TR/1000;
 out.pointsToLeftshift=leftshift;
 out.nucleus=nucleus;
 out.gamma=gamma;
+
+out.twix_header = twix_obj.hdr;
 
 
 %FILLING IN THE FLAGS
@@ -661,6 +665,8 @@ if wRefs
     else
         out_w.flags.isFourSteps=(out_w.sz(out_wop_pl.dims.subSpecs)==4);
     end
+
+    out_w.twix_header = twix_obj.hdr;
 else
     %No water reference data found.  Returning empty struct for out_w:
     disp('No water reference data found.  Returning empty struct for out_w');
