@@ -214,6 +214,19 @@ function [z_vect, theta] = getZVectorAndTheta(twix_obj)
         z_vect(2) = -initalizeZeroIfEmpty(twix_obj.hdr.Meas.VoI_Normal_Cor);
         z_vect(3) = initalizeOneIfEmpty(twix_obj.hdr.Meas.VoI_Normal_Tra);
         theta = initalizeZeroIfEmpty(twix_obj.hdr.Meas.VoI_InPlaneRotAngle);
+    elseif (isfield(twix_obj.hdr.MeasYaps.sSpecPara,'sVoI'))
+        z_vect(1) = -initalizeZeroIfEmpty(twix_obj.hdr.MeasYaps.sSpecPara.sVoI.sNormal.dSag);
+        z_vect(2) = -initalizeZeroIfEmpty(twix_obj.hdr.MeasYaps.sSpecPara.sVoI.sNormal.dCor);
+        z_vect(3) = initalizeOneIfEmpty(twix_obj.hdr.MeasYaps.sSpecPara.sVoI.sNormal.dTra);
+
+        if isfield(twix_obj.hdr.MeasYaps.sSliceArray.asSlice{1},'dInPlaneRot') 
+            inplaneRotation=twix_obj.hdr.MeasYaps.sSliceArray.asSlice{1}.dInPlaneRot;
+        elseif isfield(twix_obj.hdr.MeasYaps.sSpecPara.sVoI,'dInPlaneRot')
+            inplaneRotation=twix_obj.hdr.MeasYaps.sSpecPara.sVoI.dInPlaneRot;
+        else
+            inplaneRotation=0.0;
+        end
+        theta = inplaneRotation;
     else
         z_vect(1) = -initalizeZeroIfEmpty(twix_obj.hdr.Meas.VoiNormalSag);
         z_vect(2) = -initalizeZeroIfEmpty(twix_obj.hdr.Meas.VoiNormalCor);
